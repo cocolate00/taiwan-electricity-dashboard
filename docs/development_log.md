@@ -37,10 +37,16 @@
 | **Step 27** <br> (23:13) | 全站文字大小系統性重構與可讀性優化 | **1. 提升全站微小字體**：將原本過小（10px、11px）與偏小（12px）的字體進行系統性提升與分級。<br>**2. 調整 App.tsx**：連線狀態與 Footer 版權宣告提升為 `text-sm` (14px)。<br>**3. 調整 ChatPage.tsx**：對話參考來源、免責聲明改為 `text-xs`，推薦問題按鈕、圖表單位改為 `text-sm`。<br>**4. 調整 EnergySourcesPage.tsx**：百科正文、供電挑戰描述改為 `text-sm`，進口標記、備轉容量率範圍改為 `text-xs`。<br>**5. 調整 DashboardPage.tsx**：KPI 卡片描述、科普說明及圖表底部數據洞察改為 `text-sm`；圖表控制與篩選按鈕改為 `text-sm` 並加大內距；圖表單位與占比標籤改為 `text-sm font-bold`；YoY 增減值改為 `text-xs font-semibold`。<br>**6. 建置與測試**：執行 `npm run build` 成功建置，無 TypeScript 錯誤。<br>**7. 綠能政策目標邏輯優化**：將錯字「追躕中」修正為「追趕中」；新增單月篩選對比提示；新增備註說明 2025 年 20% 目標已延至 2026 年底達成之背景。<br>**8. 綠能目標 Hover 懸浮解說卡片**：實作滑鼠移入綠能達成率區塊時，自動於正上方浮現以燈泡 💡 引導之「歷史原訂目標 vs 下修後預期目標」差距分析懸浮卡片，滿足高階用戶的探索與資訊透明需求。 | **完成** |
 | **Step 28** <br> (23:31) | 後端 API 重構與 pytest 自動化測試建置 | **1. 問答 API 重構 (chat.py)**：當相似度 $< 0.90$（非常見問題）時，移除 pgvector 一般檢索與 LLM 呼叫，直接返回官方引導訊息與 3 個官方 Sources 連結，以從根本上節省 Token 並避免 AI 幻覺。<br>**2. 更新後端依賴**：在 `requirements.txt` 中追加 `pytest` 與 `httpx` 並於 Docker 容器中成功安裝。<br>**3. 建立自動化測試套件**：新增 `conftest.py` 提供測試 Client，撰寫 `test_health.py`、`test_charts.py` 及 `test_chat.py`。<br>**4. 執行與通過測試**：在後端容器內部執行 `pytest -v`，9 個測試案例 100% 全數通過。 | **完成** |
 | **Step 29** <br> (23:48) | 本地生產環境模擬部署與設定 | **1. 撰寫 Nginx 與 Docker 生產設定**：新增 `nginx.conf` 處理 SPA 路由並反代理 `/api` 請求至後端；建立 `Dockerfile.prod` 執行前端多階段靜態建置；建立 `docker-compose.prod.yml` 編排生產容器組（映射對外 `3080` 埠，無 reload 參數，獨立資料庫卷與埠口）。<br>**2. 建置啟動生產容器**：背景執行生產版 compose 啟動，全部容器建置與運行成功。<br>**3. 初始化生產資料庫**：執行 Alembic 遷移同步資料庫 schema (與 stamp head 同步)；成功執行三個 seeder 導入 399 筆發電、462 筆用電以及 28 筆 FAQs 數據。 | **完成** |
+| **Step 30** <br> (14:10) | 雲端分離式架構正式部署 | **1. 後端部署**：將 FastAPI Docker 容器部署至 Render.com。<br>**2. 資料庫部署**：Supabase 開啟 pgvector，並完成 Alembic 同步與數據 Seeding。<br>**3. 前端部署**：修正 GitHub Actions 工作流使用 Node 24，透過 Pages 建置並發布至 GitHub Pages。 | **完成** |
+| **Step 31** <br> (14:15) | 雲端連線 IPv6 故障排除 | **1. 痛點**：Docker 容器內預設不支援 IPv6，而 Supabase 直連網址會被解析為 IPv6 位址進而連線失敗。<br>**2. 解決方案**：在 `docker-compose.prod.yml` 中將 `DATABASE_URL` 改用 Supabase 支援 IPv4 的 Session Pooler 網址，成功解決 Backend 資料庫連線阻斷。 | **完成** |
+| **Step 32** <br> (14:20) | CI/CD 變數引號轉義修正 | **1. 痛點**：GitHub Actions 建置時在 yaml 中傳入 `VITE_API_URL=""` 會殘留引號導致 Nginx 解析出 `%22%22` 錯誤代理路由。<br>**2. 解決方案**：改用 YAML 的字典格式 `VITE_API_URL: ""` 即可精確傳遞空字串，使相對路徑反代運作正常。 | **完成** |
+| **Step 33** <br> (14:30) | UptimeRobot 心跳監控配置 | **1. 痛點**：Render 免費版在 15 分鐘無人使用後會進入休眠，造成冷啟動延遲。<br>**2. 解決方案**：設計輕量化 `/api/health` 介面，並配置 UptimeRobot 每 5 分鐘發送一次 GET 請求維持容器活躍。 | **完成** |
+| **Step 34** <br> (14:40) | 繪製系統設計圖與說明書 | **1. 架構藍圖生成**：以 AI 圖像工具生成簡約明亮的系統架構概念藍圖。<br>**2. 設計說明書**：建立 `docs/system_design.md`，使用 Mermaid 繪製多雲部署拓撲圖與 0-Token 語意快取攔截流程圖，並整理面試 Talk Points。 | **完成** |
 
 ---
 
 ## 關鍵 UI/UX 升級說明 (如何做到的)
+
 
 ### 1. 轉化為「簡單清新」明亮風格 (Clean & Light Theme)
 * 將原先暗黑科技風的 `bg-slate-950` 背景統一改為清新的 **`bg-slate-50`**。
@@ -189,3 +195,12 @@
 * [x] **生產環境 Vite 建置驗證**：在 `energy_frontend` 容器中執行建置命令並順利輸出 `dist/`，全部構建耗時 3.21s，並通過 TypeScript 的型別分析，無 any 編譯問題。
 * [x] **後端 API 重構與自動化測試驗證**：成功在後端容器內部執行 `pytest -v`，9 個測試案例（包含健康檢查、圖表 API 及 FAQ 強匹配/未匹配引導機制測試）全數通過，無任何代碼錯誤，且驗證了零 Token 消耗機制運行良好。
 * [x] **本地生產環境模擬部署驗證**：成功建置並運行生產環境 Docker 容器，對外暴露 `3080` Port；完成 Alembic 數據表結構同步，並成功 seeding 寫入 399 筆發電量、462 筆用電量及 28 筆 FAQs 向量化資料。Nginx 靜態分發與相對路徑反向代理 `/api` 準備就緒。
+* [x] **雲端正式部署與服務連線驗證**：
+  * **前端 (GitHub Pages)**：前端 React 順利通過 CI/CD 發布至 `https://cocolate00.github.io/taiwan-electricity-dashboard/`。
+  * **後端 (Render.com)**：後端服務成功 live 於 `https://taiwan-electricity-dashboard.onrender.com` 且 `/api/health` 響應正確。
+  * **資料庫 (Supabase)**：雲端資料庫完成 Alembic 同步，且 399 筆發電量、462 筆用電量與 28 筆 FAQs 向量庫皆順利 Seeding 入庫。
+  * **跨域連線**：修復 Docker 內 Supabase IPv6 連線限制與 CI/CD `VITE_API_URL` 雙引號轉義 Bug，前端能安全流暢跨域 (CORS) 呼叫後端資料與執行 0-Token 語意快取 AI 問答。
+* [x] **面試系統設計說明書與藍圖驗證**：
+  * 成功生成高質感的**系統架構藍圖**，存於 `docs/images/system_architecture_diagram.png`。
+  * 完成 `docs/system_design.md` 文件，包含 Mermaid 拓撲圖、語意快取流程圖及面試高頻答題 Talk Points，且在 Markdown 內正確嵌入圖片。
+

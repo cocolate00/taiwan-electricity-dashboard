@@ -1,25 +1,6 @@
 name: electric-prod
 
 services:
-  db:
-    image: pgvector/pgvector:pg16
-    container_name: energy_db_prod
-    restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: energy
-    ports:
-      - "5433:5432" # 避免與開發環境的 5432 埠衝突
-    volumes:
-      - db_prod_data:/var/lib/postgresql/data
-      - ./db/init:/docker-entrypoint-initdb.d
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d energy"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   backend:
     build:
       context: ./backend
@@ -28,21 +9,18 @@ services:
     restart: always
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     ports:
-      - "8081:8000" # 避免與開發環境的 8080 埠衝突，供除錯使用
+      - "8081:8000" # 供除錯與 Seeding 執行使用
     volumes:
-      - ./data:/app/data # 保留數據資料夾掛載，以防 seeder 讀取樣品數據
+      - ./data:/app/data
     env_file:
       - .env
     environment:
-      - DATABASE_URL=postgresql+psycopg://postgres:postgres@db:5432/energy
+      - DATABASE_URL=postgresql+psycopg://postgres.fdctiycwfvdcqprwoqib:2336435323375145@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.0-flash}
       - GEMINI_EMBEDDING_MODEL=${GEMINI_EMBEDDING_MODEL:-text-embedding-004}
       - FRONTEND_URL=http://localhost:3080
       - ENV=production
-    depends_on:
-      db:
-        condition: service_healthy
 
   frontend:
     build:
@@ -53,9 +31,6 @@ services:
     container_name: energy_frontend_prod
     restart: always
     ports:
-      - "3080:80" # 生產環境對外埠，可直接在瀏覽器輸入 http://localhost:3080
+      - "3080:80"
     depends_on:
       - backend
-
-volumes:
-  db_prod_data:
