@@ -21,7 +21,7 @@
 
 ## 🎨 系統技術堆疊與架構藍圖 (System Architecture)
 
-專案的核心部署架構與資料流向如下圖所示（此著色圖由 Mermaid 生成，已轉換並儲存為實體圖片，適合直接放入簡報）：
+專案的核心部署架構與資料流向如下圖所示：
 
 ![系統技術堆疊與架構圖](docs/images/mermaid_architecture.png)
 
