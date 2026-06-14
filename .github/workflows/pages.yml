@@ -36,6 +36,8 @@ jobs:
         run: npm install
 
       - name: Build
+        env:
+          VITE_API_URL: https://taiwan-electricity-dashboard.onrender.com
         run: npm run build
 
       - name: Upload artifact
