@@ -1,87 +1,268 @@
-# ⚡️ 台灣電力觀測站 (Taiwan Electricity Dashboard)
+# Taiwan Electricity Data Service Platform
 
-這是一個結合**「台灣電力歷史統計 Dashboard」**與**「能源政策 / 用電原因 AI 智能問答」**的生產級資料應用系統。
+資料視覺化 × 知識查詢 × AI 應用規劃
 
-本專案採用**前後端分離 (Decoupled)** 與**多雲混合 (Multi-Cloud)** 的免費雲端部署架構，前端 React 網頁藉由全球 CDN 分發，後端 FastAPI 容器與 Supabase 雲端資料庫（支援 PostgreSQL 與 pgvector）順利對接，實現了 **「0 成本、高可用性、極速載入」** 的雲端服務。
+## 專案背景
 
----
+近年來能源轉型、再生能源發展與供電穩定性等議題受到廣泛關注，但相關資訊分散於不同政府機關、公開資料平台及台灣電力公司網站，一般使用者不易快速取得所需資訊。
 
-## 💡 專案源起與創建動機 (Project Motivation)
+因此，本專案以「台灣電力資訊整合平台」為概念，透過資料視覺化與知識查詢機制，提供使用者更直觀且易於理解的電力資訊服務。
 
-近年來，隨著台灣半導體與高科技產業的快速發展，台灣的電力需求正以驚人的速度暴增，電力不足與電網穩定的挑戰日益嚴峻。然而，多數大眾對於台灣所面臨的能源窘境，其認知仍存在著巨大的資訊落差。
-
-本專案建立的初心，源於對台灣能源安全的深刻反思：
-1. **極度依賴進口的能源結構**：台灣目前的能源供應中，高達 **85% 以上** 依賴燃煤與燃氣等火力發電。最關鍵的是，這些化石燃料**幾乎 100% 依賴海外進口**（例如煤炭 100% 進口、液化天然氣 99.3% 進口且國內安全存量天數僅 7-11 天）。這意謂著台灣的供電系統極易受到地緣政治、國際航運或氣候事件的外部衝擊。
-2. **大眾資訊不對稱與資料冰冷**：台電與政府的電力統計資料雖為公開，但多為繁雜的 CSV 檔案，缺乏直觀的視覺化呈現，使得普通民眾難以感同身受，甚至忽略了「高火力依賴度」與「高進口依賴」背後所潛藏的嚴重斷電危機。
-
-### 🌟 我們的解決方案與目標：
-因此，我們建立了**「台灣電力觀測站」**。我們希望透過**簡單、清新且直觀的互動式圖表 (Dashboard)**，搭配**獨立的電力百科分頁**，高亮顯示火力依賴度與燃料進口警告，讓普通大眾也能在三秒內看懂台灣的發用電現況，並意識到能源自主與轉型的急迫性。同時，系統結合 `pgvector` 打造的 **0-Token 語意快取 AI 問答系統**，也為用戶解答關於供電挑戰（如夜尖峰、備轉容量燈號）的疑惑，搭起大眾與能源知識之間的橋樑。
+本專案同時作為資料服務平台（Data Service Platform）與 AI 知識查詢系統的概念驗證（Proof of Concept），展示資料整合、平台開發及 AI 應用規劃能力。
 
 ---
 
-## 🎨 系統技術堆疊與架構藍圖 (System Architecture)
+## Demo
 
-專案的核心部署架構與資料流向如下圖所示：
+### Website
 
-![系統技術堆疊與架構圖](mermaid_architecture.png)
+https://cocolate00.github.io/taiwan-electricity-dashboard/
 
----
+### GitHub Repository
 
-## 🚀 專案核心技術亮點 (Highlights)
-
-1. **前後端分離與 0 成本雲端部署**：
-   * 前端 React + Vite 靜態資源發布於 GitHub Pages，享受 CDN 全球加速。
-   * 後端 FastAPI 封裝於 Docker 生產環境容器，部署在 Render.com。
-   * 資料庫採用 Supabase PostgreSQL，省去自建資料庫的維護成本。
-2. **UptimeRobot 24/7 心跳防休眠機制**：
-   * 免費版 Render 主機在 15 分鐘無人存取後會自動進入休眠，導致下一次請求面臨 30-50 秒的冷啟動延遲。
-   * 本專案設計了輕量級健康檢查 API，並配置 UptimeRobot 每 5 分鐘發送心跳請求，**成功以 0 成本維持容器 24 小時活躍，提供即時響應**。
-3. **0-Token 語意快取攔截器 (Semantic Cache)**：
-   * 為了克服大語言模型（LLM）呼叫延遲高（約 3-5 秒）與 API 費用高昂的限制，後端使用 `pgvector` 外掛對提問與常見問答庫（FAQs）進行 Cosine 相似度比對。
-   * **相似度 $\ge 0.90$ 時物理攔截並直接返回預存標準回答與 Recharts JSON，Token 消耗為 0，響應時間降至 0.05 秒以內**。
-4. **完全杜絕 AI 幻覺 (Zero-Hallucination Fallback)**：
-   * 當使用者提問相似度低於 $0.90$ 時，系統不盲目調用大模型進行猜測，而是直接進入官方資源引導機制，回傳權威來源連結（如台電官網、能源署），確保資料與政策資訊的嚴謹度。
-5. **測試驅動開發 (TDD & Mocking)**：
-   * 後端基於 `pytest` + `httpx` 建立完整自動化單元與整合測試。
-   * 透過 Mock 掉 `EmbeddingService` 阻斷外部網路呼叫，在 **100% 離線與 0 消耗 API Key 的狀況下，驗證 RAG 快取與路由邏輯 100% 通過**。
+https://github.com/cocolate00/taiwan-electricity-dashboard
 
 ---
 
-## 📂 專案檔案結構 (Directory Structure)
+## 專案目標
+
+* 提供集中化的台灣電力資訊入口
+* 降低使用者查找資訊成本
+* 透過視覺化方式提升資訊理解效率
+* 建立可擴充的知識查詢架構
+* 驗證資料平台與 AI 應用整合的可行性
+
+---
+
+## 核心功能
+
+### 電力資訊儀表板
+
+透過圖表與卡片式介面呈現電力相關資訊，提升資料可讀性與使用者體驗。
+
+功能包含：
+
+* 電力資訊展示
+* 能源結構說明
+* 電力知識整理
+* 響應式網頁設計（Responsive Design）
+
+---
+
+### FAQ 知識查詢系統
+
+系統內建電力相關 FAQ 知識庫，提供常見問題查詢服務。
+
+查詢流程：
+
+1. 使用者輸入問題
+2. 系統比對 FAQ 知識庫
+3. 回傳最相關答案
+4. 若無適合答案，導引至官方資料來源
+
+目前知識庫收錄 28 筆常見電力問題。
+
+---
+
+### 官方資訊導引機制
+
+當問題超出知識庫範圍時，系統將引導使用者查閱可信資料來源，例如：
+
+* 台灣電力公司
+* 經濟部能源署
+* 政府資料開放平台
+
+藉此降低錯誤資訊回覆風險，提升資訊可信度。
+
+---
+
+## 系統架構
+
+### Current Architecture
 
 ```text
-cocolate00/taiwan-electricity-dashboard/
-├── backend/                   # FastAPI 後端服務
-│   ├── app/
-│   │   ├── api/              # API 控制器 (Charts 查詢、AI 對話、健康檢查)
-│   │   ├── core/             # 核心配置與資料庫 Session 管理
-│   │   ├── models/           # SQLAlchemy 資料庫 ORM 模型
-│   │   ├── repositories/     # SQLAlchemy 資料存取層
-│   │   └── services/         # 業務邏輯與 RAG 攔截運算服務
-│   └── tests/                # pytest 單元與整合測試套件
-├── frontend/                  # React 前端 SPA 網頁
-│   ├── src/
-│   │   ├── components/       # 共享 UI 元件 (導覽列、頁尾、空狀態)
-│   │   └── pages/            # 頁面元件 (Dashboard 儀表板、對話頁、百科百科)
-│   └── nginx.conf            # 生產環境 Nginx 設定
-└── docs/                      # 系統架構設計與面試準備說明文件
+User
+ │
+ ▼
+React Frontend
+ │
+ ▼
+FastAPI Backend
+ │
+ ├── FAQ Knowledge Base
+ │
+ └── PostgreSQL
+         │
+         └── Supabase
+```
+
+### Future Architecture
+
+```text
+User
+ │
+ ▼
+Frontend
+ │
+ ▼
+FastAPI
+ │
+ ▼
+Embedding Model
+ │
+ ▼
+pgvector
+ │
+ ▼
+Retrieval Layer
+ │
+ ▼
+LLM Response
 ```
 
 ---
 
-## 🚧 限制與未來待優化展望 (Roadmap & Future Scope)
+## 技術架構
 
-為了能將專案快速部署上線並落實 0 成本運行，本專案在 RAG (檢索增強生成) 部分進行了工程上的取捨。以下為本系統目前的限制與未來優化方向：
+### Frontend
 
-### 1. 目前 RAG 的工程局限與折衷
-* **語意快取攔截限制**：目前系統在問答上，高度依賴向量資料庫中的 28 筆 FAQs。當相似度 $\ge 0.90$ 時，由後端物理攔截直接返回預存標準答案與圖表。
-* **低相似度退路限制**：當使用者提問低於 $0.90$ 時，為避免 API 呼叫費用、延遲，並徹底防範 AI 的胡言亂語（幻覺），系統目前**直接轉入官方資源引導機制，沒有進一步調用大模型對非結構化政策報告（PDF）進行即時的 Chunk 切片檢索與生成**。
+* React
+* TypeScript
+* Vite
+* Tailwind CSS
 
-### 2. 未來優化路線圖 (Future Roadmap)
-* **實作動態 RAG 生成（Ollama 本地化）**：
-  * 未來可配置 Gemini 計費帳戶或在後端 Docker 中串接開源的本地大模型（如 `Ollama` + `Qwen 2.5`）。
-  * 當相似度落在 $0.60 \sim 0.90$ 區間時，調用 `LangChain` 或 `LlamaIndex`，動態檢索 `document_chunks` 表中的政策背景文件，生成結構化的客製化回答。
-* **升級為混合檢索 (Hybrid Search)**：
-  * 目前僅採用 `pgvector` 的 Cosine 相似度向量比對。未來可升級為結合 PostgreSQL 內建全文檢索 (Full-Text Search) 的混合檢索（Semantic + Keyword BM25），並實作 `Cross-Encoder` 重排序 (Re-ranking) 演算法，提升對「夜尖峰」、「備轉容量」等電力專業術語的檢索精準度。
-* **多模態 RAG (Multimodal RAG)**：
-  * 用電與能源署的政策報告中包含大量複雜的統計圖表。未來可引入支援視覺的多模態大模型，實現「圖表問答」，讓 AI 能夠直接辨識並解讀政策簡報中的趨勢圖像，提供更深度的政策剖析。
+### Backend
+
+* FastAPI
+* Python
+
+### Database
+
+* PostgreSQL
+* Supabase
+
+### Infrastructure
+
+* Docker
+* GitHub Pages
+* UptimeRobot
+
+---
+
+## 設計考量
+
+### 為何目前未採用完整 RAG 架構？
+
+專案初期曾評估導入 Retrieval-Augmented Generation（RAG）。
+
+然而目前知識範圍相對固定，FAQ 數量有限，因此採用結構化 FAQ Knowledge Base 即可滿足需求。
+
+此設計具備以下優勢：
+
+* 降低推論成本
+* 提升回覆穩定性
+* 降低維護複雜度
+* 降低模型幻覺風險
+
+當知識文件規模持續增加時，可逐步升級為：
+
+```text
+FAQ
+↓
+Semantic Search
+↓
+Vector Database
+↓
+RAG
+↓
+Hybrid Search
+```
+
+---
+
+## 開發方式
+
+本專案採用 AI Assisted Development（AI 輔助開發）模式完成。
+
+開發過程中運用 AI Coding Assistant 協助產生程式碼、建立元件及加速功能實作，藉此提升原型開發效率。
+
+本人主要負責：
+
+* 專案主題規劃與需求分析
+* 功能設計與使用情境定義
+* 系統架構規劃
+* 技術選型與方案評估
+* FAQ 知識庫內容整理
+* 功能測試與驗證
+* 錯誤修正與迭代優化
+* 網站部署與維運
+
+透過 AI 工具加速開發流程，並專注於需求分析、系統設計與問題解決。
+
+---
+
+## 專案收穫
+
+透過本專案實作與規劃，熟悉以下技術與概念：
+
+### 資料服務平台
+
+* Data Service Platform Design
+* API Design
+* Database Integration
+* Frontend & Backend Integration
+
+### AI 應用規劃
+
+* FAQ Knowledge Base
+* Semantic Search Concept
+* Vector Database Architecture
+* RAG System Design
+
+### 軟體工程
+
+* Component-Based Development
+* Docker Containerization
+* Version Control
+* Deployment Workflow
+
+---
+
+## 未來規劃
+
+### Data Pipeline
+
+* 自動化資料更新流程
+* ETL Pipeline 建置
+* 資料品質監控機制
+
+### AI Search
+
+* Embedding Model
+* pgvector
+* Semantic Search
+* Hybrid Search
+* Re-ranking
+
+### Platform Engineering
+
+* API Gateway
+* Monitoring
+* Logging
+* Usage Analytics
+* CI/CD Workflow
+
+### Advanced AI Features
+
+* Local LLM（Ollama）
+* Qwen 系列模型
+* Multimodal RAG
+* Document Intelligence
+
+---
+
+## 專案定位
+
+本專案並非單純的資料展示網站，而是以台灣電力資訊為主題，實作資料視覺化、知識查詢及 AI 應用規劃的資料服務平台原型（Proof of Concept）。
+
+透過本專案驗證從資料整理、資料儲存、資訊展示到知識查詢的完整流程，並作為資料平台開發、AI 應用導入與系統架構設計能力的作品展示。
