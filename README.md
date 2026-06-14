@@ -6,19 +6,24 @@
 
 ---
 
-## 🌐 線上展示與系統入口 (Live Demo)
+## 💡 專案源起與創建動機 (Project Motivation)
 
-* 🖥️ **前端系統入口 (GitHub Pages)**: [點此拜訪網頁](https://cocolate00.github.io/taiwan-electricity-dashboard/)
-* ⚙️ **後端健康檢查 (Render API)**: [API 運行狀態](https://taiwan-electricity-dashboard.onrender.com/api/health)
-* 📑 **詳細設計文件導覽**: [docs/README.md](docs/README.md)
+近年來，隨著台灣半導體與高科技產業的快速發展，台灣的電力需求正以驚人的速度暴增，電力不足與電網穩定的挑戰日益嚴峻。然而，多數大眾對於台灣所面臨的能源窘境，其認知仍存在著巨大的資訊落差。
+
+本專案建立的初心，源於對台灣能源安全的深刻反思：
+1. **極度依賴進口的能源結構**：台灣目前的能源供應中，高達 **85% 以上** 依賴燃煤與燃氣等火力發電。最關鍵的是，這些化石燃料**幾乎 100% 依賴海外進口**（例如煤炭 100% 進口、液化天然氣 99.3% 進口且國內安全存量天數僅 7-11 天）。這意謂著台灣的供電系統極易受到地緣政治、國際航運或氣候事件的外部衝擊。
+2. **大眾資訊不對稱與資料冰冷**：台電與政府的電力統計資料雖為公開，但多為繁雜的 CSV 檔案，缺乏直觀的視覺化呈現，使得普通民眾難以感同身受，甚至忽略了「高火力依賴度」與「高進口依賴」背後所潛藏的嚴重斷電危機。
+
+### 🌟 我們的解決方案與目標：
+因此，我們建立了**「台灣電力觀測站」**。我們希望透過**簡單、清新且直觀的互動式圖表 (Dashboard)**，搭配**獨立的電力百科分頁**，高亮顯示火力依賴度與燃料進口警告，讓普通大眾也能在三秒內看懂台灣的發用電現況，並意識到能源自主與轉型的急迫性。同時，系統結合 `pgvector` 打造的 **0-Token 語意快取 AI 問答系統**，也為用戶解答關於供電挑戰（如夜尖峰、備轉容量燈號）的疑惑，搭起大眾與能源知識之間的橋樑。
 
 ---
 
-## 🎨 系統技術棧架構藍圖 (System Architecture)
+## 🎨 系統技術堆疊與架構藍圖 (System Architecture)
 
-專案的核心部署架構與資料流向如下圖所示：
+專案的核心部署架構與資料流向如下圖所示（此著色圖由 Mermaid 生成，已轉換並儲存為實體圖片，適合直接放入簡報）：
 
-![系統技術棧架構圖](docs/images/mermaid_architecture.png)
+![系統技術堆疊與架構圖](docs/images/mermaid_architecture.png)
 
 ---
 
@@ -35,7 +40,7 @@
    * 為了克服大語言模型（LLM）呼叫延遲高（約 3-5 秒）與 API 費用高昂的限制，後端使用 `pgvector` 外掛對提問與常見問答庫（FAQs）進行 Cosine 相似度比對。
    * **相似度 $\ge 0.90$ 時物理攔截並直接返回預存標準回答與 Recharts JSON，Token 消耗為 0，響應時間降至 0.05 秒以內**。
 4. **完全杜絕 AI 幻覺 (Zero-Hallucination Fallback)**：
-   * 當使用者提問相似度低於 $0.90$ 時，系統不盲目調用大模型進行猜測，而是直接進入官方資源引導機制，回傳權威來源連結（如台電官網、能源署），確保數據與政策資訊的嚴謹度。
+   * 當使用者提問相似度低於 $0.90$ 時，系統不盲目調用大模型進行猜測，而是直接進入官方資源引導機制，回傳權威來源連結（如台電官網、能源署），確保資料與政策資訊的嚴謹度。
 5. **測試驅動開發 (TDD & Mocking)**：
    * 後端基於 `pytest` + `httpx` 建立完整自動化單元與整合測試。
    * 透過 Mock 掉 `EmbeddingService` 阻斷外部網路呼叫，在 **100% 離線與 0 消耗 API Key 的狀況下，驗證 RAG 快取與路由邏輯 100% 通過**。
@@ -56,53 +61,11 @@ cocolate00/taiwan-electricity-dashboard/
 │   └── tests/                # pytest 單元與整合測試套件
 ├── frontend/                  # React 前端 SPA 網頁
 │   ├── src/
-│   │   ├── components/       # 共享 UI 組件 (導覽列、頁尾、空狀態)
-│   │   └── pages/            # 頁面組件 (Dashboard 儀表板、對話頁、百科百科)
+│   │   ├── components/       # 共享 UI 元件 (導覽列、頁尾、空狀態)
+│   │   └── pages/            # 頁面元件 (Dashboard 儀表板、對話頁、百科百科)
 │   └── nginx.conf            # 生產環境 Nginx 設定
 └── docs/                      # 系統架構設計與面試準備說明文件
 ```
-
----
-
-## ⚙️ 本地開發與快速啟動 (Local Setup)
-
-專案已完全容器化，您可以在本機電腦上一鍵啟動前後端與資料庫：
-
-1. **複製本專案至本地**：
-   ```bash
-   git clone https://github.com/cocolate00/taiwan-electricity-dashboard.git
-   cd taiwan-electricity-dashboard
-   ```
-2. **複製並設定環境變數**：
-   ```bash
-   cp .env.example .env
-   # 在 .env 中填寫您的 GEMINI_API_KEY 與資料庫連線資訊
-   ```
-3. **啟動 Docker 容器組**：
-   ```bash
-   docker compose up --build -d
-   ```
-4. **初始化資料庫結構與數據 Seeding**：
-   ```bash
-   # 執行 Alembic 同步雲端或本地資料庫 Schema
-   docker compose exec backend alembic upgrade head
-   
-   # 匯入電力發用電數據與 28 筆問答向量庫
-   docker compose exec backend python scripts/seed_structured_data.py
-   ```
-5. **訪問網頁**：
-   * 前端網頁: `http://localhost:3000`
-   * 後端健康檢查: `http://localhost:8080/api/health`
-
----
-
-## 📜 更多深入設計文件 (Documentation)
-
-歡迎點閱專案中的 `docs/` 資料夾查看更多細節：
-* 🌐 **[系統架構設計書 (docs/system_design.md)](docs/system_design.md)**：包含分離式部署拓撲圖與 0-Token 語意快取攔截流程圖。
-* 📐 **[元件開發架構解析 (docs/development_architecture.md)](docs/development_architecture.md)**：詳細剖析後端三層式設計（Controller, Service, Repository）與前端組件連動。
-* 🎓 **[開發者學習與面試實戰指南 (docs/developer_interview_guide.md)](docs/developer_interview_guide.md)**：面試官最關心的 6 大硬核問題與回答套路。
-* 📑 **[AI 開發防錯教訓與指引 (docs/ai_lessons_learned.md)](docs/ai_lessons_learned.md)**：9 大踩坑 Bug 排除與防錯 System Prompt 模板。
 
 ---
 
@@ -112,13 +75,13 @@ cocolate00/taiwan-electricity-dashboard/
 
 ### 1. 目前 RAG 的工程局限與折衷
 * **語意快取攔截限制**：目前系統在問答上，高度依賴向量資料庫中的 28 筆 FAQs。當相似度 $\ge 0.90$ 時，由後端物理攔截直接返回預存標準答案與圖表。
-* **低相似度退路限制**：當使用者提問低於 $0.90$ 時，為避免 API 呼叫產生費用、延遲，並徹底防範 AI 的胡言亂語（幻覺），系統目前**直接轉入官方資源引導機制，沒有進一步調用大模型對非結構化政策報告（PDF）進行即時的 Chunk 切片檢索與生成**。
+* **低相似度退路限制**：當使用者提問低於 $0.90$ 時，為避免 API 呼叫費用、延遲，並徹底防範 AI 的胡言亂語（幻覺），系統目前**直接轉入官方資源引導機制，沒有進一步調用大模型對非結構化政策報告（PDF）進行即時的 Chunk 切片檢索與生成**。
 
 ### 2. 未來優化路線圖 (Future Roadmap)
 * **實作動態 RAG 生成（Ollama 本地化）**：
   * 未來可配置 Gemini 計費帳戶或在後端 Docker 中串接開源的本地大模型（如 `Ollama` + `Qwen 2.5`）。
   * 當相似度落在 $0.60 \sim 0.90$ 區間時，調用 `LangChain` 或 `LlamaIndex`，動態檢索 `document_chunks` 表中的政策背景文件，生成結構化的客製化回答。
 * **升級為混合檢索 (Hybrid Search)**：
-  * 目前僅採用 `pgvector` 的 Cosine 相似度向量比對。未來可升級為結合 PostgreSQL 內建全文檢索 (Full-Text Search) 的混合檢索（Semantic + Keyword BM25），並實作 `Cross-Encoder` 重排序 (Re-ranking) 演算法，提升對「夜尖峰」、「備轉容量」等电力專業術語的檢索精準度。
+  * 目前僅採用 `pgvector` 的 Cosine 相似度向量比對。未來可升級為結合 PostgreSQL 內建全文檢索 (Full-Text Search) 的混合檢索（Semantic + Keyword BM25），並實作 `Cross-Encoder` 重排序 (Re-ranking) 演算法，提升對「夜尖峰」、「備轉容量」等電力專業術語的檢索精準度。
 * **多模態 RAG (Multimodal RAG)**：
-  * 台電與能源署的政策報告中包含大量複雜的統計圖表。未來可引入支援視覺的多模態大模型，實現「圖表問答」，讓 AI 能夠直接辨識並解讀政策簡報中的趨勢圖像，提供更深度的政策剖析。
+  * 用電與能源署的政策報告中包含大量複雜的統計圖表。未來可引入支援視覺的多模態大模型，實現「圖表問答」，讓 AI 能夠直接辨識並解讀政策簡報中的趨勢圖像，提供更深度的政策剖析。
