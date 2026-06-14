@@ -23,7 +23,7 @@
 
 專案的核心部署架構與資料流向如下圖所示：
 
-![系統技術堆疊與架構圖](docs/images/mermaid_architecture.png)
+![系統技術堆疊與架構圖](mermaid_architecture.png)
 
 ---
 
